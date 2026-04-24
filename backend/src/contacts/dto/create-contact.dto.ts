@@ -15,9 +15,8 @@ export class CreateContactDto {
   @IsEmail()
   email!: string;
 
-  @Matches(/^\+?54\d{9,10}$/, {
-    message:
-      'El teléfono debe ser en formato argentino: +54XXXXXXXXX o 54XXXXXXXXX',
+  @Matches(/^(\+?54)?9?\d{10}$/, {
+    message: 'Formato de teléfono no válido para Argentina',
   })
   phone!: string;
 }

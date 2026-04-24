@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,10 +8,10 @@ datasource db {
 }
 
 model Contact {
-  id        Int     @id @default(autoincrement())
-  name      String  @db.VarChar(20)
-  email     String  @unique
-  phone     String  @unique
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(20)
+  email     String   @unique
+  phone     String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
