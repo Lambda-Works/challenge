@@ -1,0 +1,50 @@
+services:
+  # Base de datos
+  db:
+    image: postgres:16-alpine
+    container_name: contact-manager-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: test
+    ports:
+      - "5432:5432"
+    volumes:
+      - mediafy_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Backend NestJS
+  backend:
+    build: ./backend
+    container_name: contact-manager-backend
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - DATABASE_URL=postgresql://test:test@db:5432/test
+      - NODE_ENV=development
+    env_file:
+      - ./backend/.env
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Frontend Next.js
+  frontend:
+    build: ./frontend
+    container_name: contact-manager-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:3001/api
+    depends_on:
+      - backend
+
+volumes:
+  mediafy_pg_data:
