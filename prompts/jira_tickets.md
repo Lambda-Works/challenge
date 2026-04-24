@@ -2,13 +2,13 @@
 
 **Proyecto:** CM (Contact Manager)  
 **Sprint:** Sprint 1 - UI Update  
-**Epic:** CM-100 - UI Update (branch `ui-update`)  
+**Epic:** CM-100 - UI Update  
 **Team Lead:** Nicolas  
 **Fecha de creación:** 23 de Abril, 2026
 
 ---
 
-## 📌 Epic Principal
+## 📌 Epic — CM-100
 
 ```
 Ticket: CM-100
@@ -17,256 +17,180 @@ Título: [EPIC] UI Update - Nuevas funcionalidades de interfaz
 Tipo: Epic
 Prioridad: Alta
 Sprint: Sprint 1
-Etiquetas: epic, ui, frontend, backend
 
 Descripción:
-  Epic que agrupa las 4 features del sprint UI Update.
-  Cada feature tiene su propia branch individual que se mergea
-  a la branch ui-update antes de ir a main.
+  Epic que agrupa las 4 Stories del sprint UI Update.
+  El trabajo se organiza en dos ramas compartidas que luego mergean a main.
+
+Stories incluidas:
+  CM-101 — OAuth Google + Firebase       → Dev 1
+  CM-102 — Panel de Admin + Rutas        → Dev 2
+  CM-103 — Paginación + Loading          → Dev 3
+  CM-104 — Filtros + Favoritos           → Dev 4
 
 Flujo de branches:
-  feature/CM-101-oauth-google  ─┐
-  feature/CM-102-admin-panel   ─┤→ ui-update → main
-  feature/CM-103-pagination    ─┤
-  feature/CM-104-filters-favs  ─┘
+                          ┌── feature/CM-101-oauth-google     (Dev 1)
+  branch/auth-admin ──────┤
+                          └── feature/CM-102-admin-panel      (Dev 2)
+  main ───────────────────┤
+                          ┌── feature/CM-103-pagination       (Dev 3)
+  branch/ui-features ─────┤
+                          └── feature/CM-104-filters-favs     (Dev 4)
 
-Notas de dependencias:
-  - CM-101 y CM-102 deben mergearse juntos (auth + rutas protegidas)
-  - CM-103 y CM-104 pueden mergearse independientemente entre sí
-  - CM-103 + CM-104 no funcionarán completamente hasta el merge a ui-update
+  branch/auth-admin  → main
+  branch/ui-features → main
 ```
 
 ---
 
-## 🎫 CM-101 — OAuth Google + Firebase
+## 🧩 Story — CM-101 — OAuth Google + Firebase
 
 ```
 Ticket: CM-101
-Título: Implementar autenticación con Google OAuth via Firebase
+Título: Como usuario, quiero iniciar sesión con Google para acceder a la app
 
-Tipo: Feature
+Tipo: Story
 Prioridad: Alta
 Asignado a: Dev 1
-Sprint: Sprint 1
-Etiquetas: authentication, oauth, firebase, frontend, backend
-Branch: feature/CM-101-oauth-google
+Branch: feature/CM-101-oauth-google  (desde branch/auth-admin)
 Estado: TODO
-
-Descripción:
-  Como usuario, quiero poder iniciar sesión con mi cuenta de Google
-  para acceder a la aplicación sin crear credenciales nuevas.
-  Se usará Firebase Authentication como proveedor de OAuth.
+Epic: CM-100
 
 Criterios de aceptación:
-  - [ ] Botón "Continuar con Google" visible en la página de login
-  - [ ] Al hacer clic, se abre el popup/redirect de Google OAuth
-  - [ ] Tras autenticación exitosa, el usuario queda registrado en Firebase
-  - [ ] El token de Firebase se almacena de forma segura (localStorage o cookie)
-  - [ ] El backend valida el token de Firebase en cada request
+  - [ ] Botón "Continuar con Google" en la página de login
+  - [ ] Autenticación exitosa guarda el token de Firebase
+  - [ ] El backend valida el token en cada request
   - [ ] Si el usuario no existe en la DB, se crea automáticamente
-  - [ ] Si el usuario ya existe, hace login directamente
-  - [ ] Manejo de errores: cuenta cancelada, popup bloqueado, red caída
   - [ ] El usuario puede cerrar sesión (logout limpia el token)
-
-Subtareas:
-  - [ ] CM-101a: Crear proyecto en Firebase Console y obtener credenciales
-  - [ ] CM-101b: Instalar y configurar Firebase SDK en el frontend
-  - [ ] CM-101c: Implementar botón "Continuar con Google" (LoginForm)
-  - [ ] CM-101d: Crear endpoint backend para verificar token de Firebase
-  - [ ] CM-101e: Crear/actualizar usuario en DB al primer login
-  - [ ] CM-101f: Agregar variables de entorno de Firebase a .env.local y .env.example
-  - [ ] CM-101g: Testear flujo completo (login, logout, re-login)
+  - [ ] Botón de logout visible en el header para cualquier usuario autenticado
 
 Dependencias:
-  - CM-102 depende de este ticket (necesita saber si hay usuario autenticado)
+  - CM-102 depende de este ticket
+```
 
-Archivos que probablemente modifica:
-  - frontend/src/components/LoginForm/LoginForm.tsx
-  - frontend/src/hooks/useAuth.ts
-  - frontend/src/services/api.ts (agregar token a headers)
-  - backend/src/auth/auth.controller.ts
-  - backend/src/auth/auth.service.ts
-  - .env.local / .env.example
+### Tasks de CM-101
 
-Riesgos de merge:
-  - api.ts: Dev 4 también podría tocarlo para filtros
-  - useAuth.ts: coordinarse con Dev 2 (Admin Panel)
+```
+CM-101-T1: Crear proyecto en Firebase Console y obtener credenciales
+CM-101-T2: Instalar y configurar Firebase SDK en el frontend
+CM-101-T3: Implementar botón "Continuar con Google" en LoginForm
+CM-101-T4: Crear endpoint backend para verificar token de Firebase
+CM-101-T5: Crear/actualizar usuario en DB al primer login
+CM-101-T6: Implementar función de logout en useAuth + botón en el header
 ```
 
 ---
 
-## 🎫 CM-102 — User Admin + Panel + Ruta Protegida
+## 🧩 Story — CM-102 — Panel de Admin + Rutas Protegidas
 
 ```
 Ticket: CM-102
-Título: Implementar panel de administración y protección de rutas
+Título: Como admin, quiero un panel de control y rutas protegidas para gestionar usuarios
 
-Tipo: Feature
+Tipo: Story
 Prioridad: Alta
 Asignado a: Dev 2
-Sprint: Sprint 1
-Etiquetas: admin, auth, protected-routes, frontend, backend
-Branch: feature/CM-102-admin-panel
+Branch: feature/CM-102-admin-panel  (desde branch/auth-admin)
 Estado: TODO
-
-Descripción:
-  Como administrador, quiero acceder a un panel de control donde
-  pueda gestionar usuarios. Las rutas de la app deben estar
-  protegidas y redirigir al login si no hay sesión activa.
+Epic: CM-100
 
 Criterios de aceptación:
-  - [ ] La ruta "/" (página principal) redirige a "/login" si no hay sesión
-  - [ ] Después de login exitoso, redirige automáticamente a "/"
-  - [ ] Existe una ruta "/admin" accesible solo para usuarios con rol admin
-  - [ ] El panel de admin muestra la lista de usuarios registrados
-  - [ ] El admin puede eliminar o modificar usuarios desde el panel
-  - [ ] Un usuario sin rol admin que intente acceder a "/admin" recibe 403
-  - [ ] El botón de logout está visible en el header cuando hay sesión activa
-  - [ ] La sesión persiste al recargar la página (no se pierde el token)
-
-Subtareas:
-  - [ ] CM-102a: Crear middleware/guard de rutas protegidas en frontend
-  - [ ] CM-102b: Crear página /admin con tabla de usuarios
-  - [ ] CM-102c: Endpoint backend GET /api/admin/users (solo admin)
-  - [ ] CM-102d: Endpoint backend DELETE /api/admin/users/:id
-  - [ ] CM-102e: Agregar rol "admin" al modelo User en Prisma
-  - [ ] CM-102f: Agregar botón Logout al header en page.tsx layout
-  - [ ] CM-102g: Testear redirección sin sesión y con sesión
+  - [ ] Rutas protegidas redirigen a /login si no hay sesión
+  - [ ] Ruta /admin accesible solo para rol admin (403 si no)
+  - [ ] El panel muestra la lista de usuarios registrados
 
 Dependencias:
-  - Requiere CM-101 para saber si hay usuario autenticado y su rol
+  - Requiere CM-101 completado (auth + token)
+```
 
-Archivos que probablemente modifica:
-  - frontend/src/app/layout.tsx (protección global de rutas)
-  - frontend/src/app/page.tsx (redirección si no autenticado)
-  - frontend/src/app/admin/page.tsx (NUEVO)
-  - frontend/src/hooks/useAuth.ts (compartido con CM-101)
-  - backend/src/auth/jwt.guard.ts
-  - backend/src/admin/ (módulo nuevo)
-  - backend/prisma/schema.prisma (campo role en User)
+### Tasks de CM-102
 
-Riesgos de merge:
-  - layout.tsx: archivo de alto riesgo, coordinar con Dev 1
-  - page.tsx: archivo compartido con Dev 3 y Dev 4
-  - useAuth.ts: coordinar con Dev 1
-  - schema.prisma: si Dev 1 también modifica el modelo User
-
-Nota importante para el merge:
-  CM-101 y CM-102 deben mergearse juntos o en secuencia
-  (primero CM-101, luego CM-102) porque CM-102 depende del
-  sistema de autenticación que implementa CM-101.
+```
+CM-102-T1: Crear middleware/guard de rutas protegidas en el frontend
+CM-102-T2: Implementar redirección a /login si no hay sesión activa
+CM-102-T3: Crear página /admin con tabla de usuarios
+CM-102-T4: Endpoint backend GET /api/admin/users (solo rol admin)
+CM-102-T5: Endpoint backend DELETE /api/admin/users/:id
+CM-102-T6: Agregar campo "role" al modelo User en Prisma
 ```
 
 ---
 
-## 🎫 CM-103 — Paginación + Loading ✅
+## 🧩 Story — CM-103 — Paginación + Loading ✅
 
 ```
 Ticket: CM-103
-Título: Implementar paginación con números y estados de loading diferenciados
+Título: Como usuario, quiero ver estados de carga claros y navegar por páginas numeradas
 
-Tipo: Feature
+Tipo: Story
 Prioridad: Media
-Asignado a: Dev 3 (Nicolas)
-Sprint: Sprint 1
-Etiquetas: pagination, loading, ux, frontend
-Branch: feature/CM-103-pagination-loading
-Estado: IN REVIEW ✅ (implementado, pendiente merge a ui-update)
-
-Descripción:
-  Como usuario, quiero ver indicadores claros de carga mientras
-  la app busca contactos, y navegar entre páginas usando números
-  de página en vez de solo botones Anterior/Siguiente.
+Asignado a: Dev 3
+Branch: feature/CM-103-pagination  (desde branch/ui-features)
+Estado: IN REVIEW ✅
+Epic: CM-100
 
 Criterios de aceptación:
-  - [x] Al cargar la app por primera vez: spinner + "Cargando contactos..."
-  - [x] Al escribir en el buscador: spinner + "Buscando usuarios..."
-  - [x] Al no encontrar resultados: "No se encontraron contactos para 'X'"
-  - [x] Al limpiar la búsqueda: recarga todos los contactos correctamente
-  - [x] Los números de página son clickeables (1, 2, 3...)
-  - [x] La página activa se resalta visualmente (azul)
-  - [x] Con muchas páginas aparece elipsis inteligente: [1] … [4][5][6] … [20]
+  - [x] Carga inicial: spinner + "Cargando contactos..."
+  - [x] Búsqueda activa: spinner + "Buscando usuarios..."
+  - [x] Al limpiar búsqueda, recarga todos los contactos
+  - [x] Números de página clickeables con elipsis inteligente
   - [x] Al buscar, la paginación vuelve a página 1 instantáneamente
-  - [x] No hay doble request al iniciar la app (optimización useRef)
-
-Subtareas:
-  - [x] CM-103a: Fix bug debounce (limpiar búsqueda no recargaba)
-  - [x] CM-103b: Separar isLoading vs isSearching en useContacts.ts
-  - [x] CM-103c: Agregar spinner animado CSS a ContactTable.tsx
-  - [x] CM-103d: Fix reset instantáneo de página al buscar (Bug 3)
-  - [x] CM-103e: Optimización doble fetch con useRef
-  - [x] CM-103f: Implementar números de página con elipsis inteligente
 
 Archivos modificados:
   - frontend/src/hooks/useContacts.ts
   - frontend/src/components/ContactTable/ContactTable.tsx
-  - frontend/src/app/page.tsx (+2 líneas: isSearching, searchQuery)
+  - frontend/src/app/page.tsx
 
-Riesgos de merge conocidos:
-  - page.tsx: agregadas 2 líneas. Dev 4 (CM-104) también toca este archivo.
-    → Coordinar con Dev 4: ContactTable ahora recibe isSearching y searchQuery.
-  - useContacts.ts: Dev 4 también lo modificará para filtros.
-    → Ver cambios.md para detalle de resolución de conflictos.
+Nota: Ver cambios.md para detalle de conflictos con CM-104.
+```
 
-Ver: cambios.md para documentación detallada de todos los cambios.
+### Tasks de CM-103
+
+```
+CM-103-T1: Fix bug debounce (limpiar búsqueda no recargaba)          ✅
+CM-103-T2: Separar isLoading e isSearching en useContacts.ts          ✅
+CM-103-T3: Agregar spinner animado CSS en ContactTable.tsx             ✅
+CM-103-T4: Fix reset instantáneo de página al buscar                  ✅
+CM-103-T5: Optimización doble fetch con useRef                         ✅
+CM-103-T6: Implementar números de página con elipsis inteligente       ✅
 ```
 
 ---
 
-## 🎫 CM-104 — Filtros + Favoritos
+## 🧩 Story — CM-104 — Filtros + Favoritos
 
 ```
 Ticket: CM-104
-Título: Implementar filtros de búsqueda y sistema de contactos favoritos
+Título: Como usuario, quiero filtrar contactos y marcar favoritos para acceder rápido
 
-Tipo: Feature
+Tipo: Story
 Prioridad: Media
 Asignado a: Dev 4
-Sprint: Sprint 1
-Etiquetas: filters, favorites, ux, frontend, backend
-Branch: feature/CM-104-filters-favs
+Branch: feature/CM-104-filters-favs  (desde branch/ui-features)
 Estado: TODO
-
-Descripción:
-  Como usuario, quiero poder filtrar mis contactos por criterios
-  específicos y marcar contactos como favoritos para acceder
-  a ellos rápidamente.
+Epic: CM-100
 
 Criterios de aceptación:
-  - [ ] Existe un selector/chips de filtros sobre la tabla (ej: "Todos", "Favoritos")
-  - [ ] Al seleccionar "Favoritos", la tabla muestra solo contactos marcados
-  - [ ] Cada contacto tiene un botón/ícono para marcar/desmarcar como favorito
-  - [ ] El estado de favorito persiste (no se pierde al recargar)
-  - [ ] Los filtros y la búsqueda funcionan en conjunto (buscar dentro de favoritos)
+  - [ ] Filtro "Favoritos" muestra solo contactos marcados
+  - [ ] Botón/ícono para marcar/desmarcar favorito en cada fila
+  - [ ] El estado de favorito persiste al recargar
+  - [ ] Filtros y búsqueda funcionan en conjunto
   - [ ] Los filtros resetean la paginación a página 1
-  - [ ] Indicador visual claro del filtro activo
-
-Subtareas:
-  - [ ] CM-104a: Decidir persistencia de favoritos (localStorage vs DB)
-  - [ ] CM-104b: Agregar campo "isFavorite" al modelo Contact (si es en DB)
-  - [ ] CM-104c: Crear UI de filtros (chips/tabs) en/sobre la tabla
-  - [ ] CM-104d: Implementar lógica de favoritos en useContacts.ts
-  - [ ] CM-104e: Agregar ícono de estrella ⭐ en cada fila de la tabla
-  - [ ] CM-104f: Endpoint backend PATCH /api/contacts/:id/favorite (si es en DB)
-  - [ ] CM-104g: Testear filtros + búsqueda + paginación en conjunto
 
 Dependencias:
-  - Coordinarse con Dev 3 (CM-103) antes del merge a ui-update:
-    → ContactTable ahora recibe props: isSearching, searchQuery (no pisar)
-    → useContacts.ts fue modificado: revisar cambios.md antes de tocar
+  - Coordinarse con Dev 3 (CM-103): useContacts.ts y page.tsx fueron modificados.
+    → Revisar cambios.md antes de tocar esos archivos.
+```
 
-Archivos que probablemente modifica:
-  - frontend/src/hooks/useContacts.ts ⚠️ (Dev 3 también lo modificó)
-  - frontend/src/components/ContactTable/ContactTable.tsx ⚠️
-  - frontend/src/app/page.tsx ⚠️ (Dev 3 agregó 2 props a ContactTable)
-  - backend/src/contacts/contacts.service.ts (si favoritos van a DB)
-  - backend/prisma/schema.prisma (si agrega campo isFavorite)
+### Tasks de CM-104
 
-Riesgos de merge:
-  - useContacts.ts: HIGH - Dev 3 modificó el hook, necesita merge manual
-  - ContactTable.tsx: MEDIUM - Dev 3 modificó props e interfaz
-  - page.tsx: HIGH - archivo compartido con múltiples devs
-  → Usar cambios.md de Dev 3 como referencia antes de mergear
+```
+CM-104-T1: Decidir persistencia de favoritos (localStorage vs DB)
+CM-104-T2: Agregar campo "isFavorite" al modelo Contact (si es en DB)
+CM-104-T3: Crear UI de filtros (chips/tabs) sobre la tabla
+CM-104-T4: Agregar ícono de favorito ⭐ en cada fila de la tabla
+CM-104-T5: Implementar lógica de favoritos en useContacts.ts
+CM-104-T6: Endpoint backend PATCH /api/contacts/:id/favorite (si DB)
 ```
 
 ---
@@ -277,40 +201,26 @@ Riesgos de merge:
 TODO              IN PROGRESS       IN REVIEW         DONE
 ────────────      ───────────────   ───────────────   ──────────
 CM-101            -                 CM-103 ✅          -
-CM-102                              
-CM-104            
+CM-102
+CM-104
 ```
 
 ---
 
-## 🔗 Dependencias y Orden de Merge
-
-```
-FASE 1 (pueden ir en paralelo):
-  CM-101 + CM-102 → mergear juntos o CM-101 antes que CM-102
-  CM-103 + CM-104 → mergear juntos o en cualquier orden
-
-FASE 2:
-  Ambos grupos → ui-update
-
-FASE 3:
-  ui-update → main
-```
-
----
-
-## 💬 Convención de commits para este sprint
+## 💬 Convención de commits
 
 ```bash
-# Features
-git commit -m "CM-101: Agregar botón login con Google"
-git commit -m "CM-102: Implementar guard de rutas protegidas"
-git commit -m "CM-103: Fix bug debounce al limpiar búsqueda"
-git commit -m "CM-104: Agregar sistema de favoritos"
+# Tasks
+git commit -m "CM-101-T3: Agregar botón login con Google"
+git commit -m "CM-102-T1: Implementar guard de rutas protegidas"
+git commit -m "CM-103-T1: Fix bug debounce al limpiar búsqueda"
+git commit -m "CM-104-T3: Crear UI de filtros sobre la tabla"
 
-# Fixes dentro del ticket
-git commit -m "CM-103: Fix reset de página al buscar"
+# Merge a rama compartida
+git commit -m "merge: CM-103 → branch/ui-features"
 
-# Merge
-git commit -m "merge: CM-103 paginacion-loading → ui-update"
+# Merge a main
+git commit -m "merge: branch/ui-features → main"
 ```
+# Se hicieron 4 storys grandes. La proxima vez dividir en subtasks.
+
