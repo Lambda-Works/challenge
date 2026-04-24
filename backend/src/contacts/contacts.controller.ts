@@ -38,12 +38,14 @@ export class ContactsController {
     @Query('sortBy') sortBy?: string,
   ) {
     const isFavorite = favorite === 'true' ? true : favorite === 'false' ? false : undefined;
-    const contacts = await this.contactsService.findAll(search, isFavorite, sortBy);
+    const { contacts, totalCount, favoriteCount } = await this.contactsService.findAll(search, isFavorite, sortBy);
     return {
       statusCode: HttpStatus.OK,
       message: 'Contactos listados exitosamente',
       data: contacts,
-      total: contacts.length,
+      totalCount,
+      favoriteCount,
+      total: contacts.length, // Mantener para compatibilidad si fuera necesario
     };
   }
 

@@ -22,6 +22,8 @@ export function useContacts() {
   const initial = getInitialParams();
 
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [favoriteCount, setFavoriteCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState(initial.search);
@@ -55,8 +57,10 @@ export function useContacts() {
     setError(null);
     try {
       const favorite = favoriteFilter === 'favorites' ? true : undefined;
-      const data = await contactsApi.getAll(search, favorite, sortBy);
-      setContacts(data);
+      const response = await contactsApi.getAll(search, favorite, sortBy);
+      setContacts(response.data);
+      setTotalCount(response.totalCount || 0);
+      setFavoriteCount(response.favoriteCount || 0);
       setCurrentPage(1);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cargar contactos');
@@ -72,7 +76,7 @@ export function useContacts() {
     setError(null);
     try {
       const newContact = await contactsApi.create(data);
-      setContacts([...contacts, newContact]);
+      await fetchContacts(searchQuery || undefined); // Refetch to get updated counts
       return newContact;
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al crear contacto';
@@ -89,7 +93,7 @@ export function useContacts() {
     setError(null);
     try {
       const updated = await contactsApi.update(id, data);
-      setContacts(contacts.map((c) => (c.id === id ? updated : c)));
+      await fetchContacts(searchQuery || undefined); // Refetch to get updated counts
       return updated;
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al actualizar contacto';
@@ -106,7 +110,7 @@ export function useContacts() {
     setError(null);
     try {
       await contactsApi.delete(id);
-      setContacts(contacts.filter((c) => c.id !== id));
+      await fetchContacts(searchQuery || undefined); // Refetch to get updated counts
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al eliminar contacto';
       setError(errorMsg);
@@ -119,15 +123,25 @@ export function useContacts() {
   // Toggle favorite (optimistic update)
   const toggleFavorite = async (id: number) => {
     const previousContacts = [...contacts];
+    const previousFavCount = favoriteCount;
+    
     // Optimistic update
-    setContacts(contacts.map((c) =>
-      c.id === id ? { ...c, isFavorite: !c.isFavorite } : c
-    ));
+    setContacts(contacts.map((c) => {
+      if (c.id === id) {
+        const nextFav = !c.isFavorite;
+        setFavoriteCount(prev => nextFav ? prev + 1 : prev - 1);
+        return { ...c, isFavorite: nextFav };
+      }
+      return c;
+    }));
+
     try {
       await contactsApi.toggleFavorite(id);
+      // Opcionalmente podrías hacer fetchContacts para sincronizar todo
     } catch (err) {
       // Revert on error
       setContacts(previousContacts);
+      setFavoriteCount(previousFavCount);
       setError('Error al actualizar favorito');
       throw err;
     }
@@ -158,9 +172,7 @@ export function useContacts() {
   // Effect for search debounce
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
-      if (searchQuery) {
-        fetchContacts(searchQuery);
-      }
+      fetchContacts(searchQuery || undefined);
     }, 300);
 
     return () => clearTimeout(debounceTimer);
@@ -171,14 +183,11 @@ export function useContacts() {
     fetchContacts(searchQuery || undefined);
   }, [favoriteFilter, sortBy, fetchContacts]);
 
-  // Initial fetch
-  useEffect(() => {
-    fetchContacts(searchQuery || undefined);
-  }, [fetchContacts]);
-
   return {
     contacts: getPaginatedContacts(),
     allContacts: contacts,
+    totalCount,
+    favoriteCount,
     isLoading,
     error,
     searchQuery,

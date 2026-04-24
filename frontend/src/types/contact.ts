@@ -24,5 +24,6 @@ export interface ApiResponse<T> {
   statusCode: number;
   message: string;
   data: T;
-  total?: number;
+  totalCount?: number;
+  favoriteCount?: number;
 }

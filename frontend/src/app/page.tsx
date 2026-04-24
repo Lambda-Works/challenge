@@ -14,6 +14,8 @@ export default function Home() {
   const {
     contacts,
     allContacts,
+    totalCount,
+    favoriteCount,
     isLoading,
     error,
     searchQuery,
@@ -102,9 +104,6 @@ export default function Home() {
     }
   };
 
-  // Count favorites for the tab badge
-  const favoriteCount = allContacts.filter((c) => c.isFavorite).length;
-
   if (!mounted) return null;
 
   return (
@@ -127,7 +126,7 @@ export default function Home() {
         {/* Info section */}
         <div className="mb-6">
           <p className="text-gray-600 dark:text-gray-400">
-            Total de contactos: <span className="font-semibold">{allContacts.length}</span>
+            Mostrando: <span className="font-semibold">{contacts.length}</span> de <span className="font-semibold">{totalCount}</span> contactos
           </p>
         </div>
 
@@ -157,7 +156,7 @@ export default function Home() {
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
             >
-              Todos ({allContacts.length})
+              Todos ({totalCount})
             </button>
             <button
               onClick={() => setFavoriteFilter('favorites')}

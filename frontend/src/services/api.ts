@@ -12,14 +12,14 @@ const apiClient = axios.create({
 
 export const contactsApi = {
   // Get all contacts or search (with optional favorite and sort filters)
-  getAll: async (search?: string, favorite?: boolean, sortBy?: string): Promise<Contact[]> => {
+  getAll: async (search?: string, favorite?: boolean, sortBy?: string): Promise<ApiResponse<Contact[]>> => {
     try {
       const params: Record<string, string> = {};
       if (search) params.search = search;
       if (favorite !== undefined) params.favorite = String(favorite);
       if (sortBy) params.sortBy = sortBy;
       const response = await apiClient.get<ApiResponse<Contact[]>>('/contacts', { params });
-      return response.data.data;
+      return response.data;
     } catch (error) {
       throw error;
     }
