@@ -35,9 +35,10 @@ export class ContactsController {
   async findAll(
     @Query('search') search?: string,
     @Query('favorite') favorite?: string,
+    @Query('sortBy') sortBy?: string,
   ) {
     const isFavorite = favorite === 'true' ? true : favorite === 'false' ? false : undefined;
-    const contacts = await this.contactsService.findAll(search, isFavorite);
+    const contacts = await this.contactsService.findAll(search, isFavorite, sortBy);
     return {
       statusCode: HttpStatus.OK,
       message: 'Contactos listados exitosamente',

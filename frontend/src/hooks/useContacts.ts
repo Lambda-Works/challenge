@@ -3,15 +3,51 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Contact, CreateContactRequest, UpdateContactRequest } from '@/types/contact';
 import { contactsApi } from '@/services/api';
+import type { SortOption } from '@/components/SortDropdown/SortDropdown';
+
+// Read initial state from URL params
+function getInitialParams() {
+  if (typeof window === 'undefined') {
+    return { search: '', favorite: 'all' as const, sortBy: 'name_asc' as SortOption };
+  }
+  const params = new URLSearchParams(window.location.search);
+  return {
+    search: params.get('search') || '',
+    favorite: (params.get('favorite') === 'true' ? 'favorites' : 'all') as 'all' | 'favorites',
+    sortBy: (params.get('sortBy') || 'name_asc') as SortOption,
+  };
+}
 
 export function useContacts() {
+  const initial = getInitialParams();
+
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(initial.search);
   const [currentPage, setCurrentPage] = useState(1);
-  const [favoriteFilter, setFavoriteFilter] = useState<'all' | 'favorites'>('all');
+  const [favoriteFilter, setFavoriteFilter] = useState<'all' | 'favorites'>(initial.favorite);
+  const [sortBy, setSortBy] = useState<SortOption>(initial.sortBy);
   const itemsPerPage = 10;
+
+  // Sync filters to URL
+  const syncUrlParams = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams();
+    if (searchQuery) params.set('search', searchQuery);
+    if (favoriteFilter === 'favorites') params.set('favorite', 'true');
+    if (sortBy !== 'name_asc') params.set('sortBy', sortBy);
+
+    const newUrl = params.toString()
+      ? `${window.location.pathname}?${params.toString()}`
+      : window.location.pathname;
+    window.history.replaceState({}, '', newUrl);
+  }, [searchQuery, favoriteFilter, sortBy]);
+
+  // Update URL whenever filters change
+  useEffect(() => {
+    syncUrlParams();
+  }, [syncUrlParams]);
 
   // Fetch contacts
   const fetchContacts = useCallback(async (search?: string) => {
@@ -19,7 +55,7 @@ export function useContacts() {
     setError(null);
     try {
       const favorite = favoriteFilter === 'favorites' ? true : undefined;
-      const data = await contactsApi.getAll(search, favorite);
+      const data = await contactsApi.getAll(search, favorite, sortBy);
       setContacts(data);
       setCurrentPage(1);
     } catch (err) {
@@ -28,7 +64,7 @@ export function useContacts() {
     } finally {
       setIsLoading(false);
     }
-  }, [favoriteFilter]);
+  }, [favoriteFilter, sortBy]);
 
   // Create contact
   const createContact = async (data: CreateContactRequest) => {
@@ -97,6 +133,16 @@ export function useContacts() {
     }
   };
 
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchQuery('');
+    setFavoriteFilter('all');
+    setSortBy('name_asc');
+  };
+
+  // Check if any filter is active (non-default)
+  const hasActiveFilters = searchQuery !== '' || favoriteFilter !== 'all' || sortBy !== 'name_asc';
+
   // Get paginated contacts
   const getPaginatedContacts = () => {
     const start = (currentPage - 1) * itemsPerPage;
@@ -120,14 +166,14 @@ export function useContacts() {
     return () => clearTimeout(debounceTimer);
   }, [searchQuery, fetchContacts]);
 
-  // Refetch when favorite filter changes
+  // Refetch when favorite filter or sortBy changes
   useEffect(() => {
     fetchContacts(searchQuery || undefined);
-  }, [favoriteFilter, fetchContacts]);
+  }, [favoriteFilter, sortBy, fetchContacts]);
 
   // Initial fetch
   useEffect(() => {
-    fetchContacts();
+    fetchContacts(searchQuery || undefined);
   }, [fetchContacts]);
 
   return {
@@ -142,6 +188,10 @@ export function useContacts() {
     totalPages: getTotalPages(),
     favoriteFilter,
     setFavoriteFilter,
+    sortBy,
+    setSortBy,
+    clearFilters,
+    hasActiveFilters,
     fetchContacts,
     createContact,
     updateContact,

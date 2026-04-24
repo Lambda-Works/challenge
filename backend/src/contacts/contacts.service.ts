@@ -31,7 +31,7 @@ export class ContactsService {
     });
   }
 
-  async findAll(search?: string, favorite?: boolean) {
+  async findAll(search?: string, favorite?: boolean, sortBy?: string) {
     const where: any = {};
 
     // Filtro de búsqueda por texto
@@ -63,12 +63,28 @@ export class ContactsService {
       where.isFavorite = favorite;
     }
 
+    // Determinar ordenamiento (favoritos siempre primero)
+    const orderBy: any[] = [{ isFavorite: 'desc' }];
+
+    switch (sortBy) {
+      case 'name_desc':
+        orderBy.push({ name: 'desc' });
+        break;
+      case 'created_asc':
+        orderBy.push({ createdAt: 'asc' });
+        break;
+      case 'updated_desc':
+        orderBy.push({ updatedAt: 'desc' });
+        break;
+      case 'name_asc':
+      default:
+        orderBy.push({ name: 'asc' });
+        break;
+    }
+
     return await this.prisma.contact.findMany({
       where,
-      orderBy: [
-        { isFavorite: 'desc' },
-        { createdAt: 'desc' },
-      ],
+      orderBy,
     });
   }
 
