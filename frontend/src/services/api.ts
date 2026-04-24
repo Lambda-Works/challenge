@@ -15,48 +15,53 @@ export const contactsApi = {
   getAll: async (search?: string): Promise<Contact[]> => {
     try {
       const params = search ? { search } : {};
-      const response = await apiClient.get<ApiResponse<Contact[]>>('/contacts', { params });
-      return response.data.data;
+      const response = await apiClient.get<Contact[]>('/contacts', { params });
+      return response.data;
     } catch (error) {
+      console.error('Error fetching contacts:', error);
       throw error;
     }
   },
 
-  // Get single contact
-  getOne: async (id: number): Promise<Contact> => {
+  // Get a single contact
+  getById: async (id: number): Promise<Contact> => {
     try {
-      const response = await apiClient.get<ApiResponse<Contact>>(`/contacts/${id}`);
-      return response.data.data;
+      const response = await apiClient.get<Contact>(`/contacts/${id}`);
+      return response.data;
     } catch (error) {
+      console.error(`Error fetching contact with id ${id}:`, error);
       throw error;
     }
   },
 
-  // Create contact
-  create: async (data: CreateContactRequest): Promise<Contact> => {
+  // Create a new contact
+  create: async (contact: CreateContactRequest): Promise<Contact> => {
     try {
-      const response = await apiClient.post<ApiResponse<Contact>>('/contacts', data);
-      return response.data.data;
+      const response = await apiClient.post<Contact>('/contacts', contact);
+      return response.data;
     } catch (error) {
+      console.error('Error creating contact:', error);
       throw error;
     }
   },
 
-  // Update contact
-  update: async (id: number, data: UpdateContactRequest): Promise<Contact> => {
+  // Update a contact
+  update: async (id: number, contact: UpdateContactRequest): Promise<Contact> => {
     try {
-      const response = await apiClient.put<ApiResponse<Contact>>(`/contacts/${id}`, data);
-      return response.data.data;
+      const response = await apiClient.put<Contact>(`/contacts/${id}`, contact);
+      return response.data;
     } catch (error) {
+      console.error(`Error updating contact with id ${id}:`, error);
       throw error;
     }
   },
 
-  // Delete contact
+  // Delete a contact
   delete: async (id: number): Promise<void> => {
     try {
       await apiClient.delete(`/contacts/${id}`);
     } catch (error) {
+      console.error(`Error deleting contact with id ${id}:`, error);
       throw error;
     }
   },

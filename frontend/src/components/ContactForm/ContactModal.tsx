@@ -49,8 +49,8 @@ export function ContactModal({ isOpen, contact, onClose, onSubmit, isLoading }: 
 
     if (!formData.phone.trim()) {
       newErrors.phone = 'El teléfono es requerido';
-    } else if (!/^\+?54\d{9,10}$/.test(formData.phone.replace(/\s|-/g, ''))) {
-      newErrors.phone = 'Teléfono debe ser en formato argentino';
+    } else if (!/^(\+?54)?9?\d{10}$/.test(formData.phone.replace(/\s|-/g, ''))) {
+      newErrors.phone = 'Formato no válido. Use: +54 9 XXX XXXXXXX o similar';
     }
 
     setErrors(newErrors);

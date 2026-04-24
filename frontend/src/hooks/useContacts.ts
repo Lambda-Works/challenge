@@ -17,11 +17,16 @@ export function useContacts() {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await contactsApi.getAll(search);
-      setContacts(data);
+      const response: any = await contactsApi.getAll(search);
+      
+      // Si la respuesta es un objeto con una propiedad 'data' (común en NestJS)
+      const data = Array.isArray(response) ? response : (response?.data || []);
+      
+      setContacts(Array.isArray(data) ? data : []);
       setCurrentPage(1);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cargar contactos');
+      setContacts([]); // Aseguramos que siga siendo un array en caso de error
       console.error('Error fetching contacts:', err);
     } finally {
       setIsLoading(false);
@@ -33,8 +38,15 @@ export function useContacts() {
     setIsLoading(true);
     setError(null);
     try {
-      const newContact = await contactsApi.create(data);
-      setContacts([...contacts, newContact]);
+      const response: any = await contactsApi.create(data);
+      
+      // Extraemos el contacto (manejando si viene envuelto en .data)
+      const newContact = response?.data || response;
+      
+      if (newContact && typeof newContact === 'object') {
+        setContacts((prev) => [newContact, ...prev]); // Lo ponemos al principio
+      }
+      
       return newContact;
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al crear contacto';
@@ -50,8 +62,15 @@ export function useContacts() {
     setIsLoading(true);
     setError(null);
     try {
-      const updated = await contactsApi.update(id, data);
-      setContacts(contacts.map((c) => (c.id === id ? updated : c)));
+      const response: any = await contactsApi.update(id, data);
+      
+      // Extraemos el contacto actualizado
+      const updated = response?.data || response;
+      
+      if (updated && typeof updated === 'object') {
+        setContacts((prev) => prev.map((c) => (c.id === id ? updated : c)));
+      }
+      
       return updated;
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al actualizar contacto';
@@ -93,9 +112,9 @@ export function useContacts() {
   // Effect for search debounce
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
-      if (searchQuery) {
-        fetchContacts(searchQuery);
-      }
+      // Ahora siempre llama a fetchContacts, lo que permite que al borrar
+      // la búsqueda se recupere la lista completa.
+      fetchContacts(searchQuery);
     }, 300);
 
     return () => clearTimeout(debounceTimer);
