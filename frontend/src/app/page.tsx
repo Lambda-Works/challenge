@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { SearchBar } from '@/components/SearchBar/SearchBar';
 import { ContactTable } from '@/components/ContactTable/ContactTable';
 import { ContactModal } from '@/components/ContactForm/ContactModal';
+import { Toast } from '@/components/Toast/Toast';
 import { useContacts } from '@/hooks/useContacts';
 import { Contact, CreateContactRequest, UpdateContactRequest } from '@/types/contact';
 import { useTheme } from 'next-themes';
@@ -11,6 +12,7 @@ import { useTheme } from 'next-themes';
 export default function Home() {
   const {
     contacts,
+    allContacts,
     isLoading,
     error,
     searchQuery,
@@ -18,9 +20,12 @@ export default function Home() {
     currentPage,
     setCurrentPage,
     totalPages,
+    favoriteFilter,
+    setFavoriteFilter,
     createContact,
     updateContact,
     deleteContact,
+    toggleFavorite,
   } = useContacts();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -29,8 +34,17 @@ export default function Home() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
+  // Toast state
+  const [toastMessage, setToastMessage] = useState('');
+  const [showToast, setShowToast] = useState(false);
+
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  const showToastMessage = useCallback((message: string) => {
+    setToastMessage(message);
+    setShowToast(true);
   }, []);
 
   const handleCreateClick = () => {
@@ -70,6 +84,22 @@ export default function Home() {
     }
   };
 
+  const handleToggleFavorite = async (id: number) => {
+    const contact = allContacts.find((c) => c.id === id);
+    const willBeFavorite = contact ? !contact.isFavorite : true;
+    try {
+      await toggleFavorite(id);
+      showToastMessage(
+        willBeFavorite ? '⭐ Agregado a favoritos' : 'Removido de favoritos'
+      );
+    } catch {
+      showToastMessage('❌ Error al actualizar favorito');
+    }
+  };
+
+  // Count favorites for the tab badge
+  const favoriteCount = allContacts.filter((c) => c.isFavorite).length;
+
   if (!mounted) return null;
 
   return (
@@ -92,7 +122,7 @@ export default function Home() {
         {/* Info section */}
         <div className="mb-6">
           <p className="text-gray-600 dark:text-gray-400">
-            Total de contactos: <span className="font-semibold">{contacts.length}</span>
+            Total de contactos: <span className="font-semibold">{allContacts.length}</span>
           </p>
         </div>
 
@@ -110,11 +140,36 @@ export default function Home() {
           onCreateClick={handleCreateClick}
         />
 
+        {/* Filter Tabs */}
+        <div className="flex gap-1 mb-6 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 w-fit">
+          <button
+            onClick={() => setFavoriteFilter('all')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+              favoriteFilter === 'all'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700'
+            }`}
+          >
+            Todos ({allContacts.length})
+          </button>
+          <button
+            onClick={() => setFavoriteFilter('favorites')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+              favoriteFilter === 'favorites'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700'
+            }`}
+          >
+            ⭐ Favoritos ({favoriteCount})
+          </button>
+        </div>
+
         {/* Contact Table */}
         <ContactTable
           contacts={contacts}
           onEdit={handleEditClick}
           onDelete={handleDeleteClick}
+          onToggleFavorite={handleToggleFavorite}
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={setCurrentPage}
@@ -129,6 +184,13 @@ export default function Home() {
         onClose={handleCloseModal}
         onSubmit={handleSubmitModal}
         isLoading={modalLoading}
+      />
+
+      {/* Toast Notification */}
+      <Toast
+        message={toastMessage}
+        isVisible={showToast}
+        onClose={() => setShowToast(false)}
       />
     </div>
   );

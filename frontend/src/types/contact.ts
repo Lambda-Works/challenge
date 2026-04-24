@@ -3,6 +3,7 @@ export interface Contact {
   name: string;
   email: string;
   phone: string;
+  isFavorite: boolean;
   createdAt: string;
   updatedAt: string;
 }

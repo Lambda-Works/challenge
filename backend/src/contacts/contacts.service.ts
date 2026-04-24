@@ -31,41 +31,52 @@ export class ContactsService {
     });
   }
 
-  async findAll(search?: string) {
+  async findAll(search?: string, favorite?: boolean) {
+    const where: any = {};
+
+    // Filtro de búsqueda por texto
     if (search) {
-      return await this.prisma.contact.findMany({
-        where: {
-          OR: [
-            {
-              name: {
-                contains: search,
-                mode: 'insensitive',
-              },
-            },
-            {
-              email: {
-                contains: search,
-                mode: 'insensitive',
-              },
-            },
-            {
-              phone: {
-                contains: search,
-                mode: 'insensitive',
-              },
-            },
-          ],
+      where.OR = [
+        {
+          name: {
+            contains: search,
+            mode: 'insensitive',
+          },
         },
-        orderBy: {
-          createdAt: 'desc',
+        {
+          email: {
+            contains: search,
+            mode: 'insensitive',
+          },
         },
-      });
+        {
+          phone: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+      ];
+    }
+
+    // Filtro de favoritos
+    if (favorite !== undefined) {
+      where.isFavorite = favorite;
     }
 
     return await this.prisma.contact.findMany({
-      orderBy: {
-        createdAt: 'desc',
-      },
+      where,
+      orderBy: [
+        { isFavorite: 'desc' },
+        { createdAt: 'desc' },
+      ],
+    });
+  }
+
+  async toggleFavorite(id: number) {
+    const contact = await this.findOne(id);
+    return await this.prisma.contact.update({
+      where: { id },
+      data: { isFavorite: !contact.isFavorite },
     });
   }
 

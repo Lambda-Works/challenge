@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Contact, CreateContactRequest, UpdateContactRequest } from '@/types/contact';
 import { contactsApi } from '@/services/api';
 
@@ -10,14 +10,16 @@ export function useContacts() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [favoriteFilter, setFavoriteFilter] = useState<'all' | 'favorites'>('all');
   const itemsPerPage = 10;
 
   // Fetch contacts
-  const fetchContacts = async (search?: string) => {
+  const fetchContacts = useCallback(async (search?: string) => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await contactsApi.getAll(search);
+      const favorite = favoriteFilter === 'favorites' ? true : undefined;
+      const data = await contactsApi.getAll(search, favorite);
       setContacts(data);
       setCurrentPage(1);
     } catch (err) {
@@ -26,7 +28,7 @@ export function useContacts() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [favoriteFilter]);
 
   // Create contact
   const createContact = async (data: CreateContactRequest) => {
@@ -78,6 +80,23 @@ export function useContacts() {
     }
   };
 
+  // Toggle favorite (optimistic update)
+  const toggleFavorite = async (id: number) => {
+    const previousContacts = [...contacts];
+    // Optimistic update
+    setContacts(contacts.map((c) =>
+      c.id === id ? { ...c, isFavorite: !c.isFavorite } : c
+    ));
+    try {
+      await contactsApi.toggleFavorite(id);
+    } catch (err) {
+      // Revert on error
+      setContacts(previousContacts);
+      setError('Error al actualizar favorito');
+      throw err;
+    }
+  };
+
   // Get paginated contacts
   const getPaginatedContacts = () => {
     const start = (currentPage - 1) * itemsPerPage;
@@ -99,12 +118,17 @@ export function useContacts() {
     }, 300);
 
     return () => clearTimeout(debounceTimer);
-  }, [searchQuery]);
+  }, [searchQuery, fetchContacts]);
+
+  // Refetch when favorite filter changes
+  useEffect(() => {
+    fetchContacts(searchQuery || undefined);
+  }, [favoriteFilter, fetchContacts]);
 
   // Initial fetch
   useEffect(() => {
     fetchContacts();
-  }, []);
+  }, [fetchContacts]);
 
   return {
     contacts: getPaginatedContacts(),
@@ -116,9 +140,12 @@ export function useContacts() {
     currentPage,
     setCurrentPage,
     totalPages: getTotalPages(),
+    favoriteFilter,
+    setFavoriteFilter,
     fetchContacts,
     createContact,
     updateContact,
     deleteContact,
+    toggleFavorite,
   };
 }
