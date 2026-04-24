@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Contact, CreateContactRequest, UpdateContactRequest } from '@/types/contact';
 import { contactsApi } from '@/services/api';
 
 export function useContacts() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -14,7 +15,12 @@ export function useContacts() {
 
   // Fetch contacts
   const fetchContacts = async (search?: string) => {
-    setIsLoading(true);
+    // Diferenciar carga inicial/reset de búsqueda activa
+    if (search) {
+      setIsSearching(true);
+    } else {
+      setIsLoading(true);
+    }
     setError(null);
     try {
       const data = await contactsApi.getAll(search);
@@ -25,6 +31,7 @@ export function useContacts() {
       console.error('Error fetching contacts:', err);
     } finally {
       setIsLoading(false);
+      setIsSearching(false);
     }
   };
 
@@ -90,18 +97,29 @@ export function useContacts() {
     return Math.ceil(contacts.length / itemsPerPage);
   };
 
+  // Flag para evitar el doble fetch en el primer render
+  const isFirstRender = useRef(true);
+
   // Effect for search debounce
+  // Bug 3 fix: resetea la página INMEDIATAMENTE al cambiar la búsqueda,
+  // sin esperar a que llegue la respuesta del backend.
+  // Optimización: salta el debounce en el primer render (el initial fetch lo maneja).
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
+    setCurrentPage(1); // Reset instantáneo de página al buscar
+
     const debounceTimer = setTimeout(() => {
-      if (searchQuery) {
-        fetchContacts(searchQuery);
-      }
+      fetchContacts(searchQuery || undefined);
     }, 300);
 
     return () => clearTimeout(debounceTimer);
   }, [searchQuery]);
 
-  // Initial fetch
+  // Initial fetch (único, sin interferir con el debounce)
   useEffect(() => {
     fetchContacts();
   }, []);
@@ -110,6 +128,7 @@ export function useContacts() {
     contacts: getPaginatedContacts(),
     allContacts: contacts,
     isLoading,
+    isSearching,
     error,
     searchQuery,
     setSearchQuery,

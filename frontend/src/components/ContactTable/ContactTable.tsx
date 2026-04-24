@@ -10,6 +10,8 @@ interface ContactTableProps {
   totalPages: number;
   onPageChange?: (page: number) => void;
   isLoading?: boolean;
+  isSearching?: boolean;
+  searchQuery?: string;
 }
 
 export function ContactTable({
@@ -20,11 +22,27 @@ export function ContactTable({
   totalPages,
   onPageChange,
   isLoading,
+  isSearching,
+  searchQuery,
 }: ContactTableProps) {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="text-gray-500 dark:text-gray-400">Cargando contactos...</div>
+        <div className="flex flex-col items-center gap-3 text-gray-500 dark:text-gray-400">
+          <div className="w-8 h-8 border-4 border-gray-300 dark:border-gray-600 border-t-blue-500 rounded-full animate-spin" />
+          <span>Cargando contactos...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (isSearching) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="flex flex-col items-center gap-3 text-gray-500 dark:text-gray-400">
+          <div className="w-8 h-8 border-4 border-gray-300 dark:border-gray-600 border-t-blue-500 rounded-full animate-spin" />
+          <span>Buscando usuarios...</span>
+        </div>
       </div>
     );
   }
@@ -32,7 +50,11 @@ export function ContactTable({
   if (contacts.length === 0) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="text-gray-500 dark:text-gray-400">No hay contactos para mostrar</div>
+        <div className="text-gray-500 dark:text-gray-400">
+          {searchQuery
+            ? `No se encontraron contactos para "${searchQuery}"`
+            : 'No hay contactos para mostrar'}
+        </div>
       </div>
     );
   }
@@ -89,23 +111,67 @@ export function ContactTable({
       </div>
 
       {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-2 mt-6">
+        <div className="flex justify-center items-center gap-1 mt-6 flex-wrap">
+          {/* Botón Anterior */}
           <button
             onClick={() => onPageChange?.(currentPage - 1)}
             disabled={currentPage === 1}
-            className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+            className="px-3 py-2 text-sm bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
           >
-            ← Anterior
+            ←
           </button>
-          <span className="text-sm text-gray-700 dark:text-gray-300">
-            Página {currentPage} de {totalPages}
-          </span>
+
+          {/* Números de página con elipsis */}
+          {(() => {
+            const pages: (number | null)[] = [];
+
+            if (totalPages <= 7) {
+              for (let i = 1; i <= totalPages; i++) pages.push(i);
+            } else {
+              pages.push(1);
+              if (currentPage > 3) pages.push(null);
+              for (
+                let i = Math.max(2, currentPage - 1);
+                i <= Math.min(totalPages - 1, currentPage + 1);
+                i++
+              ) {
+                pages.push(i);
+              }
+              if (currentPage < totalPages - 2) pages.push(null);
+              pages.push(totalPages);
+            }
+
+            return pages.map((page, index) =>
+              page === null ? (
+                <span
+                  key={`ellipsis-${index}`}
+                  className="px-2 py-2 text-sm text-gray-400 dark:text-gray-500 select-none"
+                >
+                  …
+                </span>
+              ) : (
+                <button
+                  key={page}
+                  onClick={() => onPageChange?.(page)}
+                  className={`px-3 py-2 text-sm rounded transition-colors ${
+                    page === currentPage
+                      ? 'bg-blue-500 text-white font-semibold cursor-default'
+                      : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  {page}
+                </button>
+              )
+            );
+          })()}
+
+          {/* Botón Siguiente */}
           <button
             onClick={() => onPageChange?.(currentPage + 1)}
             disabled={currentPage === totalPages}
-            className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+            className="px-3 py-2 text-sm bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
           >
-            Siguiente →
+            →
           </button>
         </div>
       )}

@@ -12,6 +12,7 @@ export default function Home() {
   const {
     contacts,
     isLoading,
+    isSearching,
     error,
     searchQuery,
     setSearchQuery,
@@ -119,6 +120,8 @@ export default function Home() {
           totalPages={totalPages}
           onPageChange={setCurrentPage}
           isLoading={isLoading}
+          isSearching={isSearching}
+          searchQuery={searchQuery}
         />
       </main>
 
