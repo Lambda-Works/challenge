@@ -3,127 +3,23 @@
 Aplicación full-stack de gestión de contactos con NestJS + Prisma + PostgreSQL (backend) y Next.js + React + Tailwind CSS (frontend).
 
 ---
+Cómo correrlo desde 0
+1. Base de datos (Docker)
+cd /home/nicolas/Documentos/challenge
+docker-compose up -d db
 
-## 🚀 COMIENZA EN 3 PASOS
-
-### Paso 1: Levanta PostgreSQL con Docker
-
-```bash
-cd /home/nicolas/Documentos/Local/challenge
-docker-compose up -d
-```
-
-### Paso 2: Inicia Backend (Terminal 1)
-
-```bash
-cd /home/nicolas/Documentos/Local/challenge/backend
-npm run start:dev
-```
-
-Verás: `🚀 Application is running on: http://localhost:3001`
-
-### Paso 3: Inicia Frontend (Terminal 2)
-
-```bash
-cd /home/nicolas/Documentos/Local/challenge/frontend
-npm run dev
-```
-
-Verás: `▲ Next.js 14.2.35 - Local: http://localhost:3000`
-
----
-
-## 📍 ABRE en el navegador
-
-### 👉 http://localhost:3000
-
-Verás una tabla con:
-- ✅ 5 contactos de prueba
-- ✅ Buscador en tiempo real
-- ✅ Botón "+ Nuevo" para crear
-- ✅ Botones "✏️ Editar" y "🗑️ Eliminar"
-- ✅ Paginación (10 por página)
-- ✅ Toggle Dark/Light Mode
-
----
-
-## 🎮 FUNCIONALIDADES
-
-### Crear Contacto
-1. Click en "+ Nuevo"
-2. Rellena: Nombre (máx 20 caracteres), Email, Teléfono Argentina
-3. Click "Guardar"
-
-### Editar Contacto
-1. Click en "✏️ Editar"
-2. Modifica los datos
-3. Click "Guardar"
-
-### Eliminar Contacto
-1. Click en "🗑️ Eliminar"
-2. Confirma en el diálogo
-
-### Buscar
-- Escribe en el buscador
-- Busca por nombre, email o teléfono en tiempo real
-
-### Dark Mode
-- Click en "🌙 Oscuro" o "☀️ Claro" (arriba a la derecha)
-
-# Instalar dependencias
+2. Backend (localhost:3001)
+cd backend
 npm install
-
-# Configurar variables de entorno
-cp .env.example .env
-# DATABASE_URL=postgresql://test:test@localhost:5432/test
-
-# Ejecutar migrations + seeder
-npx prisma migrate dev --name init
-npx prisma db seed
-
-# Iniciar en desarrollo
+npx prisma migrate dev     # crea las tablas
+npx prisma db seed         # carga 5 contactos de prueba
+npx prisma generate        
 npm run start:dev
-```
 
-### 3️⃣ Frontend (Puerto 3000)
-
-```bash
+3. Frontend (localhost:3000)
 cd frontend
-
-# Instalar dependencias
 npm install
-
-# Configurar variables de entorno
-echo "NEXT_PUBLIC_API_URL=http://localhost:3001/api" > .env.local
-
-# Iniciar en desarrollo
 npm run dev
-```
-
-✅ **Listo**: Abre http://localhost:3000
-
----
-
-## 📋 Requisitos
-
-- **Node.js** 18+
-- **Docker** & **Docker Compose**
-- **PostgreSQL** 16 (en Docker)
-
----
-
-## 🏗️ Stack
-
-| Componente | Tecnología |
-|-----------|-----------|
-| Backend | NestJS 10+ |
-| Frontend | Next.js 14+ |
-| ORM | Prisma 5+ |
-| DB | PostgreSQL 16 |
-| Validación | class-validator |
-| Styling | TailwindCSS + Shadcn/ui |
-
----
 
 ## ✨ Características
 
