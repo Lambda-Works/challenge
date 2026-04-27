@@ -15,12 +15,9 @@ import {
 import { ContactsService } from './contacts.service';
 import { CreateContactDto } from './dto/create-contact.dto';
 import { UpdateContactDto } from './dto/update-contact.dto';
-import { FirebaseAuthGuard } from '../firebase/guards/firebase-auth.guard';
-
-@UseGuards(FirebaseAuthGuard)
 @Controller('api/contacts')
 export class ContactsController {
-  constructor(private readonly contactsService: ContactsService) {}
+  constructor(private readonly contactsService: ContactsService) { }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)

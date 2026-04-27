@@ -1,5 +1,5 @@
 'use client';
-//new branch
+
 import { useState, useEffect } from 'react';
 import { SearchBar } from '@/components/SearchBar/SearchBar';
 import { ContactTable } from '@/components/ContactTable/ContactTable';

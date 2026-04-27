@@ -15,7 +15,7 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(async (config) => {
   // Asegurar que Firebase terminó de inicializar
   await auth.authStateReady();
-  
+
   const user = auth.currentUser;
   if (user) {
     const token = await user.getIdToken();
@@ -28,11 +28,11 @@ apiClient.interceptors.request.use(async (config) => {
 
 export const contactsApi = {
   // Get all contacts or search
-  getAll: async (search?: string): Promise<Contact[]> => {
+  getAll: async (search?: string): Promise<ApiResponse<Contact[]>> => {
     try {
       const params = search ? { search } : {};
       const response = await apiClient.get<ApiResponse<Contact[]>>('/contacts', { params });
-      return response.data.data;
+      return response.data;
     } catch (error) {
       throw error;
     }

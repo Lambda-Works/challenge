@@ -19,7 +19,6 @@ export class UpdateContactDto {
   email?: string;
 
   @IsOptional()
-  @IsOptional()
   @Matches(/^(?:\+?54)?[\s\-]?9?[\s\-]?(?:\d[\s\-]?){10,13}$/, {
     message: 'El teléfono debe tener entre 10 y 13 dígitos',
   })

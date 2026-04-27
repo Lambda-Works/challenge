@@ -18,7 +18,7 @@ export function useContacts() {
     setError(null);
     try {
       const data = await contactsApi.getAll(search);
-      setContacts(data);
+      setContacts(data.data || []);
       setCurrentPage(1);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cargar contactos');
@@ -93,9 +93,7 @@ export function useContacts() {
   // Effect for search debounce
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
-      if (searchQuery) {
-        fetchContacts(searchQuery);
-      }
+      fetchContacts(searchQuery || undefined);
     }, 300);
 
     return () => clearTimeout(debounceTimer);
