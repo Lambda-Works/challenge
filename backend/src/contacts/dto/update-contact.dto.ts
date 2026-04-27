@@ -5,6 +5,7 @@ import {
   MinLength,
   Matches,
   IsOptional,
+  IsBoolean,
 } from 'class-validator';
 
 export class UpdateContactDto {
@@ -23,4 +24,8 @@ export class UpdateContactDto {
     message: 'El teléfono debe tener entre 10 y 13 dígitos',
   })
   phone?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isFavorite?: boolean;
 }

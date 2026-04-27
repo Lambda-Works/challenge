@@ -27,10 +27,13 @@ apiClient.interceptors.request.use(async (config) => {
 });
 
 export const contactsApi = {
-  // Get all contacts or search
-  getAll: async (search?: string): Promise<ApiResponse<Contact[]>> => {
+  // Get all contacts or search (with optional favorite and sort filters)
+  getAll: async (search?: string, favorite?: boolean, sortBy?: string): Promise<ApiResponse<Contact[]>> => {
     try {
-      const params = search ? { search } : {};
+      const params: Record<string, string> = {};
+      if (search) params.search = search;
+      if (favorite !== undefined) params.favorite = String(favorite);
+      if (sortBy) params.sortBy = sortBy;
       const response = await apiClient.get<ApiResponse<Contact[]>>('/contacts', { params });
       return response.data;
     } catch (error) {
@@ -62,6 +65,16 @@ export const contactsApi = {
   update: async (id: number, data: UpdateContactRequest): Promise<Contact> => {
     try {
       const response = await apiClient.put<ApiResponse<Contact>>(`/contacts/${id}`, data);
+      return response.data.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Toggle favorite
+  toggleFavorite: async (id: number): Promise<Contact> => {
+    try {
+      const response = await apiClient.patch<ApiResponse<Contact>>(`/contacts/${id}/favorite`);
       return response.data.data;
     } catch (error) {
       throw error;

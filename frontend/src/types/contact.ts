@@ -3,6 +3,7 @@ export interface Contact {
   name: string;
   email: string;
   phone: string;
+  isFavorite: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -23,5 +24,7 @@ export interface ApiResponse<T> {
   statusCode: number;
   message: string;
   data: T;
+  totalCount?: number;
+  favoriteCount?: number;
   total?: number;
 }

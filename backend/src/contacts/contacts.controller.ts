@@ -4,20 +4,21 @@ import {
   Post,
   Body,
   Put,
+  Patch,
   Delete,
   Param,
   Query,
   HttpCode,
   HttpStatus,
   ParseIntPipe,
-  UseGuards,
 } from '@nestjs/common';
 import { ContactsService } from './contacts.service';
 import { CreateContactDto } from './dto/create-contact.dto';
 import { UpdateContactDto } from './dto/update-contact.dto';
+
 @Controller('api/contacts')
 export class ContactsController {
-  constructor(private readonly contactsService: ContactsService) { }
+  constructor(private readonly contactsService: ContactsService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -31,12 +32,19 @@ export class ContactsController {
   }
 
   @Get()
-  async findAll(@Query('search') search?: string) {
-    const contacts = await this.contactsService.findAll(search);
+  async findAll(
+    @Query('search') search?: string,
+    @Query('favorite') favorite?: string,
+    @Query('sortBy') sortBy?: string,
+  ) {
+    const isFavorite = favorite === 'true' ? true : favorite === 'false' ? false : undefined;
+    const { contacts, totalCount, favoriteCount } = await this.contactsService.findAll(search, isFavorite, sortBy);
     return {
       statusCode: HttpStatus.OK,
       message: 'Contactos listados exitosamente',
       data: contacts,
+      totalCount,
+      favoriteCount,
       total: contacts.length,
     };
   }
@@ -51,6 +59,17 @@ export class ContactsController {
     };
   }
 
+  @Patch(':id/favorite')
+  async toggleFavorite(@Param('id', ParseIntPipe) id: number) {
+    const contact = await this.contactsService.toggleFavorite(id);
+    return {
+      statusCode: HttpStatus.OK,
+      message: contact.isFavorite
+        ? 'Contacto agregado a favoritos'
+        : 'Contacto removido de favoritos',
+      data: contact,
+    };
+  }
   @Put(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
