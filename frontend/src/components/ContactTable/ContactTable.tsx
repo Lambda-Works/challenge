@@ -72,13 +72,13 @@ export function ContactTable({
                       onClick={() => onEdit?.(contact)}
                       className="px-3 py-1 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors"
                     >
-                      ✏️ Editar
+                      Editar
                     </button>
                     <button
                       onClick={() => onDelete?.(contact.id)}
                       className="px-3 py-1 text-sm bg-red-500 hover:bg-red-600 text-white rounded transition-colors"
                     >
-                      🗑️ Eliminar
+                      Eliminar
                     </button>
                   </div>
                 </td>

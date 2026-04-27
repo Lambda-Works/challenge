@@ -109,7 +109,7 @@ export default function AdminPanel() {
               <SearchBar
                 value={searchQuery}
                 onChange={setSearchQuery}
-                onCreateClick={handleCreateClick} 
+                onCreateClick={handleCreateClick}
               />
             </div>
 
