@@ -102,16 +102,16 @@ export function ContactTable({
                 <td className="w-12 px-3 py-3 text-center">
                   <button
                     onClick={() => handleFavoriteClick(contact.id)}
-                    className={`text-sm font-semibold cursor-pointer select-none transition-all duration-200 hover:scale-110 active:scale-125 px-2 py-1 rounded ${
+                    className={`text-xl cursor-pointer select-none transition-all duration-200 hover:scale-110 active:scale-125 ${
                       animatingId === contact.id ? 'scale-125' : ''
                     } ${
                       contact.isFavorite
-                        ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                        : 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500 hover:bg-yellow-50 hover:text-yellow-600'
+                        ? 'text-yellow-400 drop-shadow-sm'
+                        : 'text-gray-300 dark:text-gray-500 hover:text-yellow-300'
                     }`}
                     title={contact.isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}
                   >
-                    {contact.isFavorite ? 'SI' : 'NO'}
+                    {contact.isFavorite ? '★' : '☆'}
                   </button>
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{contact.name}</td>
