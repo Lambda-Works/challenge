@@ -4,6 +4,7 @@ import {
   Post,
   Body,
   Put,
+  Patch,
   Delete,
   Param,
   Query,
@@ -31,13 +32,20 @@ export class ContactsController {
   }
 
   @Get()
-  async findAll(@Query('search') search?: string) {
-    const contacts = await this.contactsService.findAll(search);
+  async findAll(
+    @Query('search') search?: string,
+    @Query('favorite') favorite?: string,
+    @Query('sortBy') sortBy?: string,
+  ) {
+    const isFavorite = favorite === 'true' ? true : favorite === 'false' ? false : undefined;
+    const { contacts, totalCount, favoriteCount } = await this.contactsService.findAll(search, isFavorite, sortBy);
     return {
       statusCode: HttpStatus.OK,
       message: 'Contactos listados exitosamente',
       data: contacts,
-      total: contacts.length,
+      totalCount,
+      favoriteCount,
+      total: contacts.length, // Mantener para compatibilidad si fuera necesario
     };
   }
 
@@ -47,6 +55,18 @@ export class ContactsController {
     return {
       statusCode: HttpStatus.OK,
       message: 'Contacto encontrado',
+      data: contact,
+    };
+  }
+
+  @Patch(':id/favorite')
+  async toggleFavorite(@Param('id', ParseIntPipe) id: number) {
+    const contact = await this.contactsService.toggleFavorite(id);
+    return {
+      statusCode: HttpStatus.OK,
+      message: contact.isFavorite
+        ? 'Contacto agregado a favoritos'
+        : 'Contacto removido de favoritos',
       data: contact,
     };
   }

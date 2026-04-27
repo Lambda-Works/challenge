@@ -1,30 +1,67 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Contact, CreateContactRequest, UpdateContactRequest } from '@/types/contact';
 import { contactsApi } from '@/services/api';
+import type { SortOption } from '@/components/SortDropdown/SortDropdown';
+
+// Read initial state from URL params
+function getInitialParams() {
+  if (typeof window === 'undefined') {
+    return { search: '', favorite: 'all' as const, sortBy: 'name_asc' as SortOption };
+  }
+  const params = new URLSearchParams(window.location.search);
+  return {
+    search: params.get('search') || '',
+    favorite: (params.get('favorite') === 'true' ? 'favorites' : 'all') as 'all' | 'favorites',
+    sortBy: (params.get('sortBy') || 'name_asc') as SortOption,
+  };
+}
 
 export function useContacts() {
+  const initial = getInitialParams();
+
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [favoriteCount, setFavoriteCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(initial.search);
   const [currentPage, setCurrentPage] = useState(1);
+  const [favoriteFilter, setFavoriteFilter] = useState<'all' | 'favorites'>(initial.favorite);
+  const [sortBy, setSortBy] = useState<SortOption>(initial.sortBy);
   const itemsPerPage = 10;
 
+  // Sync filters to URL
+  const syncUrlParams = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams();
+    if (searchQuery) params.set('search', searchQuery);
+    if (favoriteFilter === 'favorites') params.set('favorite', 'true');
+    if (sortBy !== 'name_asc') params.set('sortBy', sortBy);
+
+    const newUrl = params.toString()
+      ? `${window.location.pathname}?${params.toString()}`
+      : window.location.pathname;
+    window.history.replaceState({}, '', newUrl);
+  }, [searchQuery, favoriteFilter, sortBy]);
+
+  // Update URL whenever filters change
+  useEffect(() => {
+    syncUrlParams();
+  }, [syncUrlParams]);
+
   // Fetch contacts
-  const fetchContacts = async (search?: string) => {
-    // Diferenciar carga inicial/reset de búsqueda activa
-    if (search) {
-      setIsSearching(true);
-    } else {
-      setIsLoading(true);
-    }
+  const fetchContacts = useCallback(async (search?: string) => {
+    setIsLoading(true);
     setError(null);
     try {
-      const data = await contactsApi.getAll(search);
-      setContacts(data);
+      const favorite = favoriteFilter === 'favorites' ? true : undefined;
+      const response = await contactsApi.getAll(search, favorite, sortBy);
+      setContacts(response.data);
+      setTotalCount(response.totalCount || 0);
+      setFavoriteCount(response.favoriteCount || 0);
       setCurrentPage(1);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cargar contactos');
@@ -33,7 +70,7 @@ export function useContacts() {
       setIsLoading(false);
       setIsSearching(false);
     }
-  };
+  }, [favoriteFilter, sortBy]);
 
   // Create contact
   const createContact = async (data: CreateContactRequest) => {
@@ -41,7 +78,7 @@ export function useContacts() {
     setError(null);
     try {
       const newContact = await contactsApi.create(data);
-      setContacts([...contacts, newContact]);
+      await fetchContacts(searchQuery || undefined); // Refetch to get updated counts
       return newContact;
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al crear contacto';
@@ -58,7 +95,7 @@ export function useContacts() {
     setError(null);
     try {
       const updated = await contactsApi.update(id, data);
-      setContacts(contacts.map((c) => (c.id === id ? updated : c)));
+      await fetchContacts(searchQuery || undefined); // Refetch to get updated counts
       return updated;
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al actualizar contacto';
@@ -75,7 +112,7 @@ export function useContacts() {
     setError(null);
     try {
       await contactsApi.delete(id);
-      setContacts(contacts.filter((c) => c.id !== id));
+      await fetchContacts(searchQuery || undefined); // Refetch to get updated counts
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al eliminar contacto';
       setError(errorMsg);
@@ -84,6 +121,43 @@ export function useContacts() {
       setIsLoading(false);
     }
   };
+
+  // Toggle favorite (optimistic update)
+  const toggleFavorite = async (id: number) => {
+    const previousContacts = [...contacts];
+    const previousFavCount = favoriteCount;
+
+    // Optimistic update
+    setContacts(contacts.map((c) => {
+      if (c.id === id) {
+        const nextFav = !c.isFavorite;
+        setFavoriteCount(prev => nextFav ? prev + 1 : prev - 1);
+        return { ...c, isFavorite: nextFav };
+      }
+      return c;
+    }));
+
+    try {
+      await contactsApi.toggleFavorite(id);
+      // Opcionalmente podrías hacer fetchContacts para sincronizar todo
+    } catch (err) {
+      // Revert on error
+      setContacts(previousContacts);
+      setFavoriteCount(previousFavCount);
+      setError('Error al actualizar favorito');
+      throw err;
+    }
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchQuery('');
+    setFavoriteFilter('all');
+    setSortBy('name_asc');
+  };
+
+  // Check if any filter is active (non-default)
+  const hasActiveFilters = searchQuery !== '' || favoriteFilter !== 'all' || sortBy !== 'name_asc';
 
   // Get paginated contacts
   const getPaginatedContacts = () => {
@@ -117,16 +191,18 @@ export function useContacts() {
     }, 300);
 
     return () => clearTimeout(debounceTimer);
-  }, [searchQuery]);
+  }, [searchQuery, fetchContacts]);
 
-  // Initial fetch (único, sin interferir con el debounce)
+  // Refetch when favorite filter or sortBy changes
   useEffect(() => {
-    fetchContacts();
-  }, []);
+    fetchContacts(searchQuery || undefined);
+  }, [favoriteFilter, sortBy, fetchContacts]);
 
   return {
     contacts: getPaginatedContacts(),
     allContacts: contacts,
+    totalCount,
+    favoriteCount,
     isLoading,
     isSearching,
     error,
@@ -135,9 +211,16 @@ export function useContacts() {
     currentPage,
     setCurrentPage,
     totalPages: getTotalPages(),
+    favoriteFilter,
+    setFavoriteFilter,
+    sortBy,
+    setSortBy,
+    clearFilters,
+    hasActiveFilters,
     fetchContacts,
     createContact,
     updateContact,
     deleteContact,
+    toggleFavorite,
   };
 }

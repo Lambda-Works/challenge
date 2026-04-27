@@ -5,6 +5,7 @@ import {
   MinLength,
   Matches,
   IsOptional,
+  IsBoolean,
 } from 'class-validator';
 
 export class UpdateContactDto {
@@ -24,4 +25,8 @@ export class UpdateContactDto {
       'El teléfono debe ser en formato argentino: +54XXXXXXXXX o 54XXXXXXXXX',
   })
   phone?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isFavorite?: boolean;
 }

@@ -15,26 +15,31 @@ async function main() {
       name: 'Juan Pérez',
       email: 'juan@gmail.com',
       phone: '+541112345678',
+      isFavorite: false,
     },
     {
       name: 'María García',
       email: 'maria@gmail.com',
       phone: '+541123456789',
+      isFavorite: false,
     },
     {
       name: 'Carlos López',
       email: 'carlos@gmail.com',
       phone: '+541134567890',
+      isFavorite: false,
     },
     {
       name: 'Ana Martínez',
       email: 'ana@gmail.com',
       phone: '+541145678901',
+      isFavorite: false,
     },
     {
       name: 'Luis Fernández',
       email: 'luis@gmail.com',
       phone: '+541156789012',
+      isFavorite: false,
     },
   ];
 

@@ -31,41 +31,73 @@ export class ContactsService {
     });
   }
 
-  async findAll(search?: string) {
+  async findAll(search?: string, favorite?: boolean, sortBy?: string) {
+    const where: any = {};
+
+    // Filtro de búsqueda por texto (se usará para los conteos también)
     if (search) {
-      return await this.prisma.contact.findMany({
-        where: {
-          OR: [
-            {
-              name: {
-                contains: search,
-                mode: 'insensitive',
-              },
-            },
-            {
-              email: {
-                contains: search,
-                mode: 'insensitive',
-              },
-            },
-            {
-              phone: {
-                contains: search,
-                mode: 'insensitive',
-              },
-            },
-          ],
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+        { phone: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    // 1. Obtener conteos contextuales a la búsqueda (independiente del filtro de pestaña)
+    const [totalCount, favoriteCount] = await Promise.all([
+      this.prisma.contact.count({ where }),
+      this.prisma.contact.count({ where: { ...where, isFavorite: true } }),
+    ]);
+
+    // 2. Aplicar filtro de favoritos si está activo para la lista de datos
+    if (favorite !== undefined) {
+      where.isFavorite = favorite;
+    }
+
+    // 3. Obtener contactos (el ordenamiento fino lo hacemos en JS para que sea case-insensitive)
+    const contacts = await this.prisma.contact.findMany({ where });
+
+    // 4. Ordenamiento manual (case-insensitive)
+    contacts.sort((a, b) => {
+      // Favoritos siempre primero como prioridad máxima
+      if (a.isFavorite !== b.isFavorite) {
+        return a.isFavorite ? -1 : 1;
+      }
+
+      // Criterio secundario elegido por el usuario
+      switch (sortBy) {
+        case 'name_desc':
+          return b.name.localeCompare(a.name, 'es', { sensitivity: 'base' });
+        case 'created_asc':
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        case 'updated_desc':
+          return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+        case 'name_asc':
+        default:
+          return a.name.localeCompare(b.name, 'es', { sensitivity: 'base' });
+      }
+    });
+
+    // Pequeño fix: el sortBy default es name_asc
+    if (!sortBy || sortBy === 'name_asc') {
+      contacts.sort((a, b) => {
+        if (a.isFavorite !== b.isFavorite) return a.isFavorite ? -1 : 1;
+        return a.name.localeCompare(b.name, 'es', { sensitivity: 'base' });
       });
     }
 
-    return await this.prisma.contact.findMany({
-      orderBy: {
-        createdAt: 'desc',
-      },
+    return {
+      contacts,
+      totalCount,
+      favoriteCount,
+    };
+  }
+
+  async toggleFavorite(id: number) {
+    const contact = await this.findOne(id);
+    return await this.prisma.contact.update({
+      where: { id },
+      data: { isFavorite: !contact.isFavorite },
     });
   }
 
